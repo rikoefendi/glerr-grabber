@@ -4,13 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\""
+    "test": "echo \"No test specified\""
+  },
+  "keywords": [
+    "glerrr",
+    "grabber"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rikoefendi/glerr-grabber.git"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "cherio": "^1.0.0-rc.2",
     "http-scraper": "0.0.7",
-    "request": "^2.88.0",
+    "request": "^2.88.0"
   }
 }
