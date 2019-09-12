@@ -1,0 +1,16 @@
+{
+  "name": "glerrr-grabber",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\""
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cherio": "^1.0.0-rc.2",
+    "http-scraper": "0.0.7",
+    "request": "^2.88.0",
+  }
+}
