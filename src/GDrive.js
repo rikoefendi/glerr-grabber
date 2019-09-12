@@ -17,7 +17,8 @@ const options = {
 
 }
 const Drive = class GDrive {
-    constructor(uri) {
+    constructor(id) {
+        let uri = `${baseUri}/uc?id=${id}`
         this.opt = Object.assign({}, options, { uri })
         this.$uri = uri
         this.http = Http(this.opt)

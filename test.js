@@ -1,7 +1,7 @@
 const {GDrive} = require('./')
 let i = 0;
 function loop(){
-    GDrive(urlshare).getLinkDownload().then(url => {
+    GDrive(idfile).getLinkDownload().then(url => {
     
         console.log(url);
         console.log(i);
