@@ -1,24 +1,9 @@
 const {GDrive} = require('./')
-let i = 0;
-function loop(){
-    GDrive(idfile).getLinkDownload().then(url => {
-    
+//https://drive.google.com/open?id=1bkKaQrRb1jSa4HlSS8DsQ3CLGHPmvpWm
+    GDrive('1bkKaQrRb1jSa4HlSS8DsQ3CLGHPmvpWm')
+    .then(url => {
         console.log(url);
-        console.log(i);
-        i+=1
-        if(i < 1000){
-
-            loop()
-        }
-    }).catch(e => {
-        console.log(e);
-        console.log(i);
-        i+=1
-        if(i < 1000){
-
-            loop()
-        }
     })
-}
-
-loop()
+    .catch(e => {
+        console.log(e);
+    })
