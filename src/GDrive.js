@@ -1,71 +1,86 @@
 const request = require('request')
-const cherio = require('cherio')
+var extend = require('extend')
 const userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'
 const host = 'drive.google.com'
 let baseUri = `https://${host}`
-const path = require('path')
-const headers = {
-    Accept: '*/*',
-    Connection: 'close',
-    host,
-    'User-Agent': userAgent
+const defHeaders = {
+  Accept: '*/*',
+  Connection: 'close',
+  host,
+  'User-Agent': userAgent,
+  referer: baseUri
 }
-const Drive = class GDrive {
-    constructor(id) {
-        let uri = `${baseUri}/uc?id=${id}`
-        this.opt = {
-            method: "GET",
-            uri,
-            headers,
-            followAllRedirects: false
-        }
-        this.$uri = uri
-        return this.getLinkDownload()
-    }
-    getConfirmLinkDownload(body) {
-        const $ = cherio.load(body)
-        return baseUri + $('#uc-download-link').attr('href')
 
-    }
-    async getLinkDownload() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const req = request(this.opt)
-                    .on('response', response => {
-                        const { headers } = response
-                        const requestRedirect = response.request
-                        if (headers['content-disposition']) {
-                            
-                            resolve(requestRedirect.uri.href)
-                            req.abort()
-                        } else {
-                            const cookie = headers['set-cookie'].toString() || ''
-                            let chunk;
-                            req.on('data', data => {
-                                chunk += data.toString()
-                            })
-                            req.on('end', () => {
-                                const uri = this.getConfirmLinkDownload(chunk)
-                                headers.Cookie = cookie
-                                const ops = Object.assign({}, this.opt, {uri}, {headers})
-                                const reqs = request(ops)
-                                    reqs.on('response', ({request}) => {
-                                        resolve(request.uri.href)
-                                        reqs.abort()
-                                    })
-                                    reqs.on('error', e => reject(e))
-                            })
-                            req.on('error', e => reject(e))
-                        }
-                    })
-            } catch (e) {
-                reject(e)
-            }
-        })
-
-    }
+const Graber = function(id, headers, callback = null) {
+  const params = initParams(id, headers, callback)
+  this.id = params.id
+  this.callback = params.callback
+  delete params.id
+  delete params.callback
+  const opt = extend(this.defaultOpt, params)
+  this.reloaded = 0
+  return this.parseLink(opt)
 }
-const GDrive = function (uri) {
-    return new Drive(uri)
+
+
+Graber.prototype.defaultOpt = {
+  method: "GET",
+  headers: defHeaders,
+  followRedirect: false,
+  followAllRedirect: false,
+}
+
+
+Graber.prototype.parseLink = function (opt) {
+  if (this.reloaded > 3) {
+    return this.callback(true, 'max excecution time')
+  }
+  this.reloaded += 1
+  let redirect = ''
+  request(opt, (err, res, body) => {
+    if (err || res.statusCode >= 400 || body.toLowerCase().match(/domain administrator|quota exceeded|not found/)) {
+      this.callback(true, body.toLowerCase().replace(/.*<title>|<\/title>[\s\S]*/gsm, '') || err)
+      return
+    }
+    const confirm = escape(body).replace(/[\s\S]*confirm%3D|%26amp[\s\S]*/gsm, '')
+    const { headers } = res
+    Object.keys(headers).forEach(key => {
+      if (key.toLowerCase() == 'set-cookie') {
+        opt.headers.cookie = headers[key]
+        opt.headers.referer = opt.uri
+        opt.uri = `https://drive.google.com/uc?export=download&confirm=${confirm}&id=${this.id}`
+      }
+      if (key.toLowerCase() == 'location') {
+        redirect = headers[key]
+      }
+    })
+    if (!redirect) {
+      return this.parseLink(opt)
+    }
+    this.callback(null, redirect)
+    return
+  })
+}
+
+function initParams(id, headers, callback) {
+  if (typeof headers === 'function') {
+    callback = headers
+  }
+  headers = Object.assign({}, headers, defHeaders)
+  var params = {}
+  if (typeof headers === 'object') {
+    extend(params, { headers, id })
+  } else if (typeof id == 'string') {
+    extend(params, { id })
+  } else {
+    extend(params, id)
+  }
+  params.uri = `${baseUri}/uc?id=${params.id}&export=download`
+  params.callback = callback || params.callback
+  return params
+}
+
+function GDrive(id, headers, callback) {
+  return new Graber(id,headers, callback)
 }
 module.exports = GDrive
