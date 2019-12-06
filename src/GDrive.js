@@ -35,7 +35,7 @@ Graber.prototype.defaultOpt = {
 Graber.prototype.cache = function (fileId, link = '') {
   const path = './tmp/drivecache/'
   let hash = crypto.createHash('md5').update(fileId).digest("hex")
-  const expired = new Date().getTime() + 1000 * 60 * 5
+  const expired = new Date().getTime() + 1000 * 60 * 25
   const toCache = expired + '~' + link
 
   if (!fs.existsSync(path)) fs.mkdirSync(path)
